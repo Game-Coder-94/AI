@@ -4,6 +4,10 @@
 #include <math.h>
 #include "layers.h"
 
+#define NUM_SAMPLES 4
+#define INPUT_SIZE 2
+#define OUTPUT_SIZE 1
+
 // Random weight initilizer
 double randWeight(){
     return ((double) rand() / RAND_MAX) * 2 - 1;    // Returns value between -1 to 1
@@ -67,6 +71,25 @@ void forwardNetwork(NeuralNetwork *nn, double *inputs){
         forwardLayer(&nn -> layers[i], currentInputs);
         currentInputs = nn -> layers[i].outputs;
     }
+}
+
+// Load dataset function
+void loadDataset(const char *filename, double inputs[][INPUT_SIZE], double targets[][OUTPUT_SIZE]){
+    FILE *fp = fopen(filename, "r");
+    if(fp == NULL){
+        perror("Dataset can't be opened!");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < NUM_SAMPLES; i++){
+        for (int j = 0; j < INPUT_SIZE; j++){
+            fscanf(fp, "%lf", &inputs[i][j]);
+        }
+        for (int k = 0; k < OUTPUT_SIZE; k++){
+            fscanf(fp, "%lf", &targets[i][k]);
+        }
+    }
+    fclose(fp);
 }
 
 
