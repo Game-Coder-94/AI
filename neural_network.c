@@ -53,7 +53,7 @@ double sigmoid(double x){
 void forwardLayer(Layer *layer, double *inputs){
     for (int i = 0; i < layer -> numNeurons; i++){
         // Adding bias to sum (raw output)
-        int sum = layer -> biases[i];
+        double sum = layer -> biases[i];
         for (int j = 0; j < layer -> numInputs; j++){
             sum += inputs[j] * layer -> weights[j + i * layer -> numInputs];    // Didn't understand how weight is selected
         }
