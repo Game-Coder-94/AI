@@ -138,6 +138,56 @@ void computeHiddenLayerGradients(Layer *currentLayer, Layer *nextLayer){
     }
 }
 
+// Udate weights and biases
+void updateWeightsAndBiases(Layer *layer, double *inputs, double learningRate){
+    for (int i = 0; i < layer -> numNeurons; i++){
+        // Update Biases
+        layer -> biases[i] -= learningRate * layer -> deltas[i];
+
+        // Update weights
+        for (int j = 0; j < layer -> numInputs; j++){
+            // Function understood
+            layer -> weights[j + i * layer -> numNeurons] -= learningRate * layer -> deltas[i] * inputs[j]; // But this statement didn't understand
+        }
+    }
+}
+
+// Train Function
+void train(NeuralNetwork *nn, double **inputs, double **targets, int numSamples, int numEpochs, double learningRate){
+    for (int epoch = 0; epoch < numEpochs; epoch++){
+        double totalError = 0.0;
+
+        for (int sample = 0; sample < numSamples; sample++){
+            // Forward Propagation (Calculation of final output)
+            forwardNetwork(&nn, inputs[sample]);
+
+            // Calculate Error (Cost)
+            Layer *outputLayer = &nn -> layers[nn -> numLayers];
+            totalError += computeError(outputLayer -> outputs, targets[sample], outputLayer -> numNeurons);
+
+            // Backpropation
+            computeOutputLayerGradients(outputLayer, targets[sample]);
+            for (int i = nn -> numLayers - 2; i >= 0; i--){
+                computeHiddenLayerGradients(&nn -> layers[i], &nn -> layers[i + 1]);
+            }
+
+            // Update Weights and Biases
+            double *currentInputs = inputs[sample];
+            for (int i = 0; i < nn -> numLayers; i++){
+                updateWeightsAndBiases(&nn -> layers[i], currentInputs, learningRate);
+                currentInputs = nn -> layers[i].outputs; 
+            }
+        }
+
+        // Print error for epoch
+        printf("Epoch = %d, Error = %f\n", epoch, totalError / numSamples);
+    }
+}
+
+
+
+
+
 // Main Function
 
 
