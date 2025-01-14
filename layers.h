@@ -7,6 +7,7 @@ typedef struct{
    double *weights;
    double *biases;
    double *outputs;
+   double *deltas;
 } Layer;
 
 typedef struct{

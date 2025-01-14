@@ -20,6 +20,7 @@ void initializeLayer(Layer *layer, int numInputs, int numNeurons){
     layer -> weights = malloc(numInputs * numNeurons * sizeof(double));
     layer -> biases = malloc(numNeurons * sizeof(double));
     layer -> outputs = malloc(numNeurons * sizeof(double));
+    layer -> deltas = malloc(numNeurons * sizeof(double));
     
     // Add Randomize weight
     for (int i = 0; i < numInputs * numNeurons; i++){
@@ -29,6 +30,11 @@ void initializeLayer(Layer *layer, int numInputs, int numNeurons){
     // Add randomize bias
     for (int i = 0; i < numNeurons; i++){
         layer -> biases[i] = randWeight();
+    }
+
+    // Initilize deltas with zero
+    for (int i = 0; i < numNeurons; i++){
+        layer -> deltas[i] = 0;
     }
 }
 
@@ -90,8 +96,47 @@ void loadDataset(const char *filename, double inputs[][INPUT_SIZE], double targe
         }
     }
     fclose(fp);
+    // Add this function in main function
 }
 
+// Compute Error
+double computeError(double *predicted, double *actual, int size){
+    double error = 0.0;
+    for (int i = 0; i < size; i++){
+        double diff = predicted[i] - actual[i];
+        error += diff * diff;   // Squared error
+    }
+    return error / size;    // Mean of squared error
+}
+
+/*
+        <-------------------------------------->
+
+                    Back Propagation
+
+        <-------------------------------------->
+*/
+
+// Calculate Gradient for Output nodes
+void computeOutputLayerGradients(Layer *outputLayer, double *actual){
+    for (int i = 0; i < outputLayer -> numNeurons; i++){
+        double error = outputLayer -> outputs[i] - actual[i];
+        double derivative = outputLayer -> outputs[i] * (1 - outputLayer -> outputs[i]);
+        outputLayer -> deltas[i] = error * derivative;
+    }
+}
+
+// Calculate Gradient for hidden layers
+void computeHiddenLayerGradients(Layer *currentLayer, Layer *nextLayer){
+    for (int i = 0; i < currentLayer -> numNeurons; i++){
+        double sum = 0.0;
+        for (int j = 0; j < nextLayer -> numNeurons; j++){
+            sum += nextLayer -> weights[i + j * currentLayer -> numNeurons] * nextLayer -> deltas[j];
+        }
+        double derivate = currentLayer -> outputs[i] * (1 - currentLayer -> outputs[i]);
+        currentLayer -> deltas[i] = sum * derivate;
+    }
+}
 
 // Main Function
 
