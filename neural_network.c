@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include "layers.h"
+#include "defineDataset.h"
 
 #define NUM_SAMPLES 4
 #define INPUT_SIZE 2
@@ -99,6 +100,36 @@ void loadDataset(const char *filename, double inputs[][INPUT_SIZE], double targe
     // Add this function in main function
 }
 
+void storeWeightsAndBiases(const char *filename, NeuralNetwork *nn){
+    FILE *fp = fopen(filename, "w");
+    if(fp == NULL){
+        perror("File can't able to open");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < nn -> numLayers; i++){
+        Layer *layer = &nn -> layers[i];
+
+        // Store weights
+        for (int j = 0; j < layer -> numNeurons; j++){
+            for (int k = 0; k < layer -> numInputs; k++){
+                fprintf(fp, "%lf  ", layer -> weights[k + j * layer -> numInputs]);
+            }
+            fprintf(fp, "\n");
+        }
+
+        fprintf(fp, "\n");
+
+        // Store biases
+        for (int j = 0; j < layer -> numNeurons; j++){
+            fprintf(fp, "%lf\n", layer -> biases[j]);
+        }
+        
+        fprintf(fp, "\n\n");
+    }
+    fclose(fp);
+}
+
 // Compute Error
 double computeError(double *predicted, double *actual, int size){
     double error = 0.0;
@@ -153,16 +184,16 @@ void updateWeightsAndBiases(Layer *layer, double *inputs, double learningRate){
 }
 
 // Train Function
-void train(NeuralNetwork *nn, double **inputs, double **targets, int numSamples, int numEpochs, double learningRate){
+void train(NeuralNetwork *nn, double inputs[NUM_SAMPLES][INPUT_SIZE], double targets[NUM_SAMPLES][OUTPUT_SIZE], int numSamples, int numEpochs, double learningRate){
     for (int epoch = 0; epoch < numEpochs; epoch++){
         double totalError = 0.0;
 
         for (int sample = 0; sample < numSamples; sample++){
             // Forward Propagation (Calculation of final output)
-            forwardNetwork(&nn, inputs[sample]);
+            forwardNetwork(nn, inputs[sample]);
 
             // Calculate Error (Cost)
-            Layer *outputLayer = &nn -> layers[nn -> numLayers];
+            Layer *outputLayer = &nn -> layers[nn -> numLayers - 1];
             totalError += computeError(outputLayer -> outputs, targets[sample], outputLayer -> numNeurons);
 
             // Backpropation
@@ -199,6 +230,7 @@ int main(){
     NeuralNetwork nn;
     initilizeNetwork(&nn, layersizes, 3);
 
+    /*
     // Input (Format)
     double inputs[] = {0.0, 1.0};
 
@@ -207,6 +239,34 @@ int main(){
 
     // Output for result
     printf("Output: %f\n", *nn.layers[nn.numLayers - 1].outputs);
+    */
+    double inputs[NUM_SAMPLES][INPUT_SIZE] = {
+        {0.0, 0.0},
+        {0.0, 1.0},
+        {1.0, 0.0},
+        {1.0, 1.0}
+    };
+
+    double targets[NUM_SAMPLES][OUTPUT_SIZE] = {
+        {0.0},
+        {1.0},
+        {1.0},
+        {0.0}
+    };
+
+    // Train a network
+    train(&nn, inputs, targets, 4, 10000, 0.5);
+
+    // Test the network
+    for (int i = 0; i < 4; i++){
+        forwardNetwork(&nn, inputs[i]);
+        Layer *outputLayer = &nn.layers[nn.numLayers - 1];
+        printf("Input => %0.1f, %0.1f Output => %0.5f\n", inputs[i][0], inputs[i][1], outputLayer -> outputs[0]);
+    }
+
+    // Store Weight and Biases
+    storeWeightsAndBiases("weightsandbiases.txt", &nn);
+    
 
     // Free memory
     for (int i = 0; i < nn.numLayers; i++){
